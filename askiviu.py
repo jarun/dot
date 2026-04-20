@@ -280,7 +280,7 @@ def render(stdscr, image_files, idx, sharpen, dither_mode, color, single_image_m
         # Show filename at the bottom
         try:
             if display_name:
-                shown_name = display_name if display_name.startswith('[') else os.path.basename(display_name)
+                shown_name = os.path.basename(display_name)
             elif isinstance(image_path, (str, bytes, os.PathLike)):
                 shown_name = os.path.basename(image_path)
             else:
@@ -417,8 +417,8 @@ def main():
                         stdscr.refresh()
                         stdscr.getch()
                         return
-                    # Pass the PIL Image directly to render
-                    key = render(stdscr, [img], 0, sharpen, dither_mode, color, single_image_mode=True, wait_time=wait_time, slideshow=False)
+                    # Pass a tuple (image, filename) to render
+                    key = render(stdscr, [(img, path)], 0, sharpen, dither_mode, color, single_image_mode=True, wait_time=wait_time, slideshow=False)
                 else:
                     key = render(stdscr, image_files, idx, sharpen, dither_mode, color, single_image_mode=False, wait_time=wait_time, slideshow=False)
             except Exception as e:
