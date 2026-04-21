@@ -450,7 +450,7 @@ def main():
             elif key in (ord('q'), 27):
                 break
 
-    curses.wrapper(render_with_video_support, image_files, idx, not args.no_sharpen, args.dither, not args.no_color, slideshow=args.slideshow)
+    curses.wrapper(render_with_video_support, image_files, idx, not args.no_sharpen, args.dither, not args.no_color, wait_time=args.wait, slideshow=args.slideshow)
 
 
 if __name__ == "__main__":
