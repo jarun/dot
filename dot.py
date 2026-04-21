@@ -318,14 +318,27 @@ def render(stdscr, image_files, idx, sharpen, dither_mode, color, single_image_m
                 time.sleep(0.01)
             frame_idx = (frame_idx + 1) % len(frames)
         else:
-            # For non-animated images, just wait for key press once
-            while True:
-                key = stdscr.getch()
-                if key != -1:
-                    stdscr.nodelay(False)
-                    return key
-                time.sleep(0.01)
-            break
+            if slideshow:
+                # Slideshow mode: auto-advance after wait_time seconds
+                start_time = time.time()
+                while True:
+                    key = stdscr.getch()
+                    if key != -1:
+                        stdscr.nodelay(False)
+                        return key
+                    if (time.time() - start_time) >= wait_time:
+                        # Return a special value to indicate auto-advance
+                        return 'slideshow_next'
+                    time.sleep(0.01)
+            else:
+                # For non-animated images, just wait for key press once
+                while True:
+                    key = stdscr.getch()
+                    if key != -1:
+                        stdscr.nodelay(False)
+                        return key
+                    time.sleep(0.01)
+                break
     return key
 
 def main():
@@ -416,7 +429,7 @@ def main():
         render._format = args.format
         while True:
             try:
-                key = render(stdscr, image_files, idx, sharpen, dither_mode, color, single_image_mode=False, wait_time=wait_time, slideshow=False)
+                key = render(stdscr, image_files, idx, sharpen, dither_mode, color, single_image_mode=False, wait_time=wait_time, slideshow=slideshow)
             except Exception as e:
                 stdscr.clear()
                 stdscr.addstr(0, 0, f"Error: {e}")
@@ -424,7 +437,9 @@ def main():
                 stdscr.getch()
                 return
             # Navigation
-            if key in (curses.KEY_RIGHT, ord('l'), ord(' ')):
+            if key == 'slideshow_next':
+                idx = (idx + 1) % n
+            elif key in (curses.KEY_RIGHT, ord('l'), ord(' ')):
                 idx = (idx + 1) % n
             elif key in (curses.KEY_LEFT, ord('h')):
                 idx = (idx - 1) % n
@@ -435,7 +450,7 @@ def main():
             elif key in (ord('q'), 27):
                 break
 
-    curses.wrapper(render_with_video_support, image_files, idx, not args.no_sharpen, args.dither, not args.no_color)
+    curses.wrapper(render_with_video_support, image_files, idx, not args.no_sharpen, args.dither, not args.no_color, slideshow=args.slideshow)
 
 
 if __name__ == "__main__":
