@@ -216,13 +216,29 @@ def render(stdscr, image_files, idx, sharpen, dither_mode, color, single_image_m
     img_h = rows * 4
     try:
         image_path = image_files[idx]
-        # Determine display_name for the status bar
         display_name = None
-        if isinstance(image_path, tuple) and len(image_path) == 2:
-            image_path, display_name = image_path
-        elif isinstance(image_path, Image.Image):
-            display_name = '[video frame]'
-        frames, color_maps, oy, ox, fit_h, fit_w, durations = _load_image(image_path, img_w, img_h, sharpen, color)
+        video_exts = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.flv', '.wmv', '.mpeg', '.mpg']
+        ext = os.path.splitext(image_path)[1].lower() if isinstance(image_path, str) else ''
+        if ext in video_exts:
+            try:
+                # Use global args if available, else defaults
+                seek = getattr(render, '_seek', '0:0:10')
+                fmt = getattr(render, '_format', 'jpeg')
+                img = extract_video_frame(image_path, seek, fmt)
+                display_name = image_path
+                frames, color_maps, oy, ox, fit_h, fit_w, durations = _load_image(img, img_w, img_h, sharpen, color)
+            except Exception as e:
+                stdscr.clear()
+                stdscr.addstr(0, 0, f"Video frame error: {e}")
+                stdscr.refresh()
+                stdscr.getch()
+                return -1
+        else:
+            if isinstance(image_path, tuple) and len(image_path) == 2:
+                image_path, display_name = image_path
+            elif isinstance(image_path, Image.Image):
+                display_name = '[video frame]'
+            frames, color_maps, oy, ox, fit_h, fit_w, durations = _load_image(image_path, img_w, img_h, sharpen, color)
         is_animated = len(frames) > 1
         frame_idx = 0
         key = -1
@@ -363,24 +379,14 @@ def main():
                 sys.exit(1)
             idx = 0
         else:
-            # If --frametime is specified, treat as video and extract frame
             video_exts = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.flv', '.wmv', '.mpeg', '.mpg']
-            ext = os.path.splitext(args.path)[1].lower()
-            if args.seek and ext in video_exts:
-                try:
-                    img = extract_video_frame(args.path, args.seek, args.format)
-                except Exception as e:
-                    print(f"Failed to extract frame: {e}", file=sys.stderr)
-                    sys.exit(1)
-                image_files = [img]
-                idx = 0
-                curses.wrapper(lambda *a, **kw: render(*a, **kw, single_image_mode=True, wait_time=args.wait, slideshow=args.slideshow), image_files, idx, not args.no_sharpen, args.dither, not args.no_color)
-                return
             abs_path = os.path.abspath(args.path)
             directory = os.path.dirname(abs_path) or os.getcwd()
-            image_files = get_image_files(directory)
+            # Always include videos if the selected file is a video
+            include_videos = os.path.splitext(abs_path)[1].lower() in video_exts or args.seek is not None
+            image_files = get_image_files(directory, include_videos=include_videos)
             if not image_files:
-                print(f"No images found in directory: {directory}", file=sys.stderr)
+                print(f"No images or videos found in directory: {directory}", file=sys.stderr)
                 sys.exit(1)
             try:
                 idx = image_files.index(abs_path)
@@ -401,26 +407,16 @@ def main():
     # Always pass the video_exts and frametime to render for dynamic extraction
     video_exts = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.flv', '.wmv', '.mpeg', '.mpg']
 
+    # Pass seek and format to render via function attributes for video frame extraction
     def render_with_video_support(stdscr, image_files, start_idx, sharpen, dither_mode, color, single_image_mode=False, wait_time=5, slideshow=False):
         idx = start_idx
         n = len(image_files)
+        # Pass seek/format to render via function attributes
+        render._seek = args.seek
+        render._format = args.format
         while True:
-            path = image_files[idx]
-            ext = os.path.splitext(path)[1].lower()
             try:
-                if ext in video_exts:
-                    try:
-                            img = extract_video_frame(path, args.seek, args.format)
-                    except Exception as e:
-                        stdscr.clear()
-                        stdscr.addstr(0, 0, f"Video frame error: {e}")
-                        stdscr.refresh()
-                        stdscr.getch()
-                        return
-                    # Pass a tuple (image, filename) to render
-                    key = render(stdscr, [(img, path)], 0, sharpen, dither_mode, color, single_image_mode=True, wait_time=wait_time, slideshow=False)
-                else:
-                    key = render(stdscr, image_files, idx, sharpen, dither_mode, color, single_image_mode=False, wait_time=wait_time, slideshow=False)
+                key = render(stdscr, image_files, idx, sharpen, dither_mode, color, single_image_mode=False, wait_time=wait_time, slideshow=False)
             except Exception as e:
                 stdscr.clear()
                 stdscr.addstr(0, 0, f"Error: {e}")
