@@ -148,7 +148,7 @@ def extract_video_frame(path, frametime, extractformat):
     vcodec = 'mjpeg' if extractformat == 'jpeg' else 'png'
     ffmpeg_cmd = [
         'ffmpeg', '-y', '-nostdin', '-hide_banner', '-loglevel', 'error',
-        '-ss', str(frametime), '-i', path,
+        '-skip_frame', 'nokey', '-ss', str(frametime), '-i', path,
         '-an', '-threads', '1', '-vsync', '0',
         '-vframes', '1',
         '-f', 'image2pipe',
