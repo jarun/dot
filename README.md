@@ -50,11 +50,12 @@ python -m dot <file-or-directory>
 
 ## Dependencies
 
-| Package  | Usage                                       |
-|----------|---------------------------------------------|
-| numpy    | Fast array operations for image processing  |
-| Pillow   | Image loading and manipulation              |
-| ffmpeg   | Video frame extraction                      |
+| Package   | Version    | Usage                                      |
+|-----------|------------|--------------------------------------------|
+| python    | >=3.7      | Required Python version                    |
+| numpy     | >=1.20     | Fast array operations for image processing |
+| Pillow    | >=8.0      | Image loading and manipulation             |
+| ffmpeg    | >=4.2      | Video frame extraction                     |
 
 ## Arguments
 
