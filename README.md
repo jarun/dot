@@ -8,7 +8,7 @@ Render images and video previews as Braille dot art in the terminal with xterm-2
 - Animated GIF support
 - xterm-256 color and grayscale
 - Dithering options (ordered, error diffusion)
-- Video frame extraction (with ffmpeg)
+- Video preview (frame extraction with ffmpeg)
 - Keyboard navigation and slideshow mode
 
 <br>
