@@ -2,6 +2,8 @@
 
 Render images and video previews as Braille dot art in the terminal with xterm-256 color and ncurses dim/normal/bold attributes.
 
+It was written to be used as a terminal image viewer with [`nnn`](https://github.com/jarun/nnn). Works independently too.
+
 ## Features
 
 - Braille art rendering for images
